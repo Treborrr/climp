@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="images/logo2.png" alt="Chaufa Logo" width="200"/>
+</p>
+
 # Chaufa 🎶
 
 A simple, elegant music control center for your Linux terminal.
