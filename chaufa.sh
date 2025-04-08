@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Configuración
-IMAGE_URL="URL_HERE" # URL de una imagen 
-VOLUME_STEP=0.05                                               # Incremento de volumen
+# Config
+IMAGE_URL="URL_HERE"
+VOLUME_STEP=0.05
 
-# Colores
+# Colors
 GREEN="\e[32m"
 BLUE="\e[34m"
 RED="\e[31m"
@@ -12,7 +12,7 @@ YELLOW="\e[33m"
 CYAN="\e[36m"
 RESET="\e[0m"
 
-# Convertir microsegundos a mm:ss usando bc
+# Convert microseconds to mm:ss
 convert_us_to_time() {
     local microseconds=$1
     local total_sec=$(echo "$microseconds / 1000000" | bc)
@@ -21,22 +21,21 @@ convert_us_to_time() {
     printf "%02d:%02d" $min $sec
 }
 
-# Preparar la imagen personalizada reducida como array de líneas
+# Prepare image as lines
 prepare_custom_image() {
     local tmp_file="/tmp/music_center_image.png"
     local lines=()
 
-    # Descarga la imagen a un archivo temporal
     if curl --silent --fail --output "$tmp_file" "$IMAGE_URL"; then
         mapfile -t lines < <(chafa -s 20x10 -f symbols -c full "$tmp_file")
     else
-        lines=("[ ⚠️ Imagen no disponible ]")
+        lines=("[ ⚠️ Image not available ]")
     fi
 
     printf '%s\n' "${lines[@]}"
 }
 
-# Preparar la información de la pista como array de líneas (sin escape literal)
+# Prepare track info as lines
 prepare_track_info() {
     local player="$1"
     local status artist title album volume position length
@@ -62,35 +61,31 @@ prepare_track_info() {
         vol_percent=$(awk "BEGIN {printf \"%.0f\", $volume * 100}")
     fi
 
-    printf "${YELLOW}🎵 Estado: %s${RESET}\n" "$status"
-    printf "${CYAN}🎶 Canción: %s${RESET}\n" "${title:-Desconocido}"
-    printf "${CYAN}👤 Artista: %s${RESET}\n" "${artist:-Desconocido}"
-    printf "${CYAN}💿 Álbum: %s${RESET}\n" "${album:-Desconocido}"
-    printf "${BLUE}⏱️ Tiempo: %s / %s${RESET}\n" "$pos_formatted" "$len_formatted"
-    printf "${BLUE}🔊 Volumen: %s%%%s\n" "$vol_percent" "$RESET"
+    printf "${YELLOW}🎵 Status: %s${RESET}\n" "$status"
+    printf "${CYAN}🎶 Title: %s${RESET}\n" "${title:-Unknown}"
+    printf "${CYAN}👤 Artist: %s${RESET}\n" "${artist:-Unknown}"
+    printf "${CYAN}💿 Album: %s${RESET}\n" "${album:-Unknown}"
+    printf "${BLUE}⏱️ Time: %s / %s${RESET}\n" "$pos_formatted" "$len_formatted"
+    printf "${BLUE}🔊 Volume: %s%%%s\n" "$vol_percent" "$RESET"
     printf "${BLUE}       🍳\n"
-    printf "    🍚 🔥 🥢\n" 
+    printf "    🍚 🔥 🥢\n"
 }
 
-# Mostrar la vista formateada en columnas correctamente
+# Print UI
 print_status() {
     clear
     echo -e "${CYAN}🍚🥢 CLIMP Chaufa Music Control 🍚🥢${RESET}"
     echo "-----------------------------------------------------------"
 
     local player="$1"
-
-    # Capturamos las líneas de la imagen y de la info en arrays
     mapfile -t image_lines < <(prepare_custom_image)
     mapfile -t info_lines < <(prepare_track_info "$player")
 
-    # Determinar número máximo de líneas
     local max_lines=${#image_lines[@]}
     if [[ ${#info_lines[@]} -gt $max_lines ]]; then
         max_lines=${#info_lines[@]}
     fi
 
-    # Imprimir lado a lado directamente para respetar colores
     for ((i=0; i<max_lines; i++)); do
         img="${image_lines[i]}"
         info="${info_lines[i]}"
@@ -98,13 +93,13 @@ print_status() {
     done
 
     echo "-----------------------------------------------------------"
-    echo -e "${GREEN}🥢Controles:${RESET}"
+    echo -e "${GREEN}🥢 Controls:${RESET}"
     echo "🍳 [P] Play/Pause   🔥 [N] Next   🍚 [B] Previous"
-    echo "➕ [+] Vol+   ➖ [-] Vol-   🔇 [S] Silencio   ❌ [Q] Salir"
+    echo "➕ [+] Vol+   ➖ [-] Vol-   🔇 [S] Mute   ❌ [Q] Quit"
     echo "-----------------------------------------------------------"
 }
 
-# Detectar el reproductor activo automáticamente
+# Get active player
 get_active_player() {
     for player in $(playerctl -l 2>/dev/null); do
         local status
@@ -116,7 +111,7 @@ get_active_player() {
     done
 }
 
-# Monitor dinámico de cambios de pista
+# Track change monitor
 dynamic_monitor() {
     local player="$1"
     playerctl --player="$player" --follow metadata --format "{{artist}} - {{title}}" | while read -r track; do
@@ -124,12 +119,12 @@ dynamic_monitor() {
     done
 }
 
-# Main
+# Main program
 main() {
     player=$(get_active_player)
 
     if [[ -z "$player" ]]; then
-        echo -e "${RED}❌ No se detectan reproductores activos.${RESET}"
+        echo -e "${RED}❌ No active player found.${RESET}"
         exit 1
     fi
 
@@ -137,7 +132,6 @@ main() {
     dynamic_monitor "$player" &
     monitor_pid=$!
 
-    # Loop de control
     while true; do
         read -rsn1 input
         case "$input" in
@@ -161,7 +155,7 @@ main() {
             [Ss]) playerctl --player="$player" volume 0 ;;
             [Qq])
                 kill $monitor_pid
-                echo -e "\n👋 Cerrando el centro de control musical. ¡Disfruta la música!🔥🍳🍚🥢"
+                echo -e "\nExiting Chaufa. Enjoy your music! 🍳🔥🍚🥢"
                 exit 0
                 ;;
         esac
@@ -170,4 +164,3 @@ main() {
 }
 
 main
-
