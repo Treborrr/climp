@@ -9,6 +9,14 @@ Control your favorite music services like Spotify, YouTube, SoundCloud, and more
 
 Chaufa is served! 🍚🍳🔥
 
+## Screenshots
+
+![Chaufa Screenshot](images/cap1.png)
+![Chaufa Screenshot](images/cap2.png)
+![Chaufa Screenshot](images/cap5.png)
+![Chaufa Screenshot](images/cap3.png)
+![Chaufa Screenshot](images/cap4.png)
+
 ## Features
 
 - Live music info display
